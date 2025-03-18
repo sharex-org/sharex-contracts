@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -40,14 +40,18 @@ contract PowerBankDemo is
     mapping (address => bool) public tokenWhitelist;
     mapping (address => uint256) public tokenDeposits;
 
-    mapping (string => Order) public orders;
-    mapping (address => string[]) public userOrders;
+    mapping (uint256 => Order) public orders;
+    mapping (address => uint256[]) public userOrders;
 
-    event PayOrder(string indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _deposit);
-    event SettleOrder(string indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _amount, uint256 _endTime);
+    mapping (address => uint256) public totalFees;
+    mapping (address => uint256) public withdrawFees;
+
+    event PayOrder(uint256 indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _deposit);
+    event SettleOrder(uint256 indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _amount, uint256 _endTime);
     event AddTokenWhitelist(address indexed _tokenAddress, uint256 _deposit);
     event RemoveTokenWhitelist(address indexed _tokenAddress);
     event SetTokenDeposit(address indexed _tokenAddress, uint256 _deposit);
+    event WithdrawFees(address indexed _tokenAddress, address indexed _userAddr, uint256 _amount);
 
     function initialize() public initializer {
         __AccessControl_init();
@@ -75,21 +79,17 @@ contract PowerBankDemo is
         return (tokenWhitelist[_tokenAddress], tokenDeposits[_tokenAddress]);
     }
 
-    function getOrder(string memory _orderNum) public view returns(Order memory) {
+    function getOrder(uint256 _orderNum) public view returns(Order memory) {
         return orders[_orderNum];
     }
 
-    function getUserOrders(address _userAddr) public view returns(string[] memory) {
+    function getUserOrders(address _userAddr) public view returns(uint256[] memory) {
         return userOrders[_userAddr];
-    }
-
-    function compareStrings(string memory str1, string memory str2) public pure returns (bool) {
-        return keccak256(abi.encodePacked(str1)) == keccak256(abi.encodePacked(str2));
     }
 
     // ************************************** PUBLIC FUNCTION **************************************
 
-    function payOrder(string memory _orderNum, address _tokenAddress) external whenNotPaused() payable {
+    function payOrder(uint256 _orderNum, address _tokenAddress) external whenNotPaused() payable {
         // checks
         require(checkTokenWhitelist(_tokenAddress), "token not support");
         require(orders[_orderNum].startTime == 0, "order number exists");
@@ -116,24 +116,29 @@ contract PowerBankDemo is
         emit PayOrder(_orderNum, _tokenAddress, msg.sender, deposit);
     }
 
-    function settleOrder(string memory _orderNum, uint256 _amount, uint256 _endTime) external onlyRole(ADMIN_ROLE) {
+    function settleOrder(uint256 _orderNum, uint256 _amount, uint256 _endTime) external onlyRole(ADMIN_ROLE) {
         // check
         require(orders[_orderNum].deposit >= _amount, "amount invalid");
+        require(orders[_orderNum].status == OrderStatus.IN_PROCESS, "already settled");
 
         orders[_orderNum].fee = _amount;
         orders[_orderNum].endTime = _endTime;
         orders[_orderNum].status = OrderStatus.COMPLETED;
 
+        totalFees[orders[_orderNum].tokenAddress] = totalFees[orders[_orderNum].tokenAddress] + _amount;
+
         address userAddr = orders[_orderNum].userAddr;
         for (uint256 i = 0; i < userOrders[userAddr].length; i++) {
-            if (compareStrings(userOrders[userAddr][i], _orderNum)) {
+            if (userOrders[userAddr][i] == _orderNum) {
                 userOrders[userAddr][i] = userOrders[userAddr][userOrders[userAddr].length - 1];
                 userOrders[userAddr].pop();
             }
         }
 
         uint256 returnAmt = orders[_orderNum].deposit - _amount;
-        _safeTransfer(orders[_orderNum].tokenAddress, userAddr, returnAmt);
+        if (returnAmt > 0) {
+            _safeTransfer(orders[_orderNum].tokenAddress, userAddr, returnAmt);
+        }
 
         emit SettleOrder(_orderNum, orders[_orderNum].tokenAddress, userAddr, _amount, _endTime);
     }
@@ -161,6 +166,15 @@ contract PowerBankDemo is
         tokenDeposits[_tokenAddress] = _deposit;
 
         emit SetTokenDeposit(_tokenAddress, _deposit);
+    }
+
+    function withdrawFee(address _tokenAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 fee = totalFees[_tokenAddress] - withdrawFees[_tokenAddress];
+        if (fee > 0) {
+            _safeTransfer(_tokenAddress, msg.sender, fee);
+        }
+
+        emit WithdrawFees(_tokenAddress, msg.sender, fee);
     }
 
     // ************************************** INTERNAL FUNCTION **************************************

@@ -5,8 +5,8 @@
 ### Testnet
 
 - USDT contract address: 0xE349139c3425838016e8DE0839A4467d07f683d8
-- Order contract address: 0x6fD95f5Ff9742819561E5b68FdFA15F69bE7e1a7
-- Deposit amount: 50USDT (50000000, decimal=6)
+- Order contract address: 0xBB83c12a48f7E84cD3c249039d579013D3a59255
+- Deposit amount: 20USDT (20000000, decimal=6)
 
 ## USDT contract
 
@@ -39,7 +39,7 @@ call order contract
 
 ### Pay for order
 
-    function payOrder(string memory _orderNum, address _tokenAddress) external
+    function payOrder(uint256 _orderNum, address _tokenAddress) external
 
 Parameters:
 - _orderNum: order number
@@ -47,7 +47,7 @@ Parameters:
 
 ### Pay for order event
 
-    event PayOrder(string indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _deposit);
+    event PayOrder(uint256 _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _deposit);
 
 Parameters:
 - _orderNum: order number
@@ -57,7 +57,7 @@ Parameters:
 
 ### Settle order
 
-    function settleOrder(string memory _orderNum, uint256 _amount, uint256 _endTime) external
+    function settleOrder(uint256 _orderNum, uint256 _amount, uint256 _endTime) external
 
 Parameters:
 - _orderNum: order number
@@ -66,7 +66,7 @@ Parameters:
 
 ### Settle order event
 
-    event SettleOrder(string indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _amount, uint256 _endTime);
+    event SettleOrder(uint256 indexed _orderNum, address indexed _tokenAddress, address indexed _userAddr, uint256 _amount, uint256 _endTime);
 
 Parameters:
 - _orderNum: order number
@@ -77,7 +77,7 @@ Parameters:
 
 ### Query order info
 
-    function getOrder(string memory _orderNum) public view returns(Order memory)
+    function getOrder(uint256 _orderNum) public view returns(Order memory)
 
 Parameters:
 - _orderNum: order number
@@ -94,10 +94,10 @@ Returns:
 
 ### Query user in-process order list
 
-    function getUserOrders(address _userAddr) public view returns(string[] memory)
+    function getUserOrders(address _userAddr) public view returns(uint256[])
 
 Parameters:
 - _userAddr: user address
 
 Returns:
-- string[]: order number list
+- uint256[]: order number list

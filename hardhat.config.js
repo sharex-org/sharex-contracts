@@ -27,6 +27,14 @@ module.exports = {
     b2mainnet: {
       url: "https://rpc.bsquared.network/",
       accounts: [process.env.B2MAINNET_PRIVATE_KEY]
+    },
+    bnbmainnet: {
+      url: "https://bsc-dataseed.bnbchain.org",
+      accounts: [process.env.MAINNET_ADMIN_PRIVATE_KEY]
+    },
+    monadtestnet: {
+      url: "https://testnet-rpc.monad.xyz",
+      accounts: [process.env.MONADTESTNET_PRIVATE_KEY]
     }
   },
 };

@@ -148,3 +148,5 @@ node_modules
 ignition/deployments/chain-31337
 
 .idea
+.vscode
+.DS_Store
