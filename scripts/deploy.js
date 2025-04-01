@@ -18,7 +18,6 @@ async function main() {
     const PowerBankDemo = await ethers.getContractFactory("PowerBankDemo");
     const instance = await upgrades.deployProxy(PowerBankDemo, [], { 
         initializer: 'initialize',
-        gasLimit: 10000000,
      });
     await instance.waitForDeployment();
     console.log("PowerBankDemo deployed to:", instance.target);

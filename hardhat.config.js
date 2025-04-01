@@ -33,8 +33,9 @@ module.exports = {
       accounts: [process.env.MAINNET_ADMIN_PRIVATE_KEY]
     },
     monadtestnet: {
-      url: "https://testnet-rpc.monad.xyz",
-      accounts: [process.env.MONADTESTNET_PRIVATE_KEY]
+      url: "https://testnet-rpc.monad.xyz/",
+      accounts: [process.env.B2TESTNET_PRIVATE_KEY],
+      chainId: 10143,
     }
   },
 };
